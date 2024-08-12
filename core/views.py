@@ -1,5 +1,59 @@
-from django.shortcuts import render
-from django.http import HttpResponse
+from django.shortcuts import render, redirect
+from django.contrib.auth.models import User, auth
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from .models import Profile
 
+@login_required(login_url='signin')
 def index(request):
-    return HttpResponse('<h1>Welcom to Social App</h1>')
+    return render(request, 'index.html')
+
+def register(request):
+
+    if request.method == "POST":
+        username = request.POST['username']
+        email = request.POST['email']
+        password = request.POST['password']
+        password2 = request.POST['password2']
+
+        if password == password2:
+            if User.objects.filter(email=email).exists():
+                messages.error(request, 'Email Take Before')
+                return redirect('register')
+            elif User.objects.filter(username=username).exists():
+                messages.error(request, 'Username Take Before')
+                return redirect('register')
+            else:
+                user = User.objects.create_user(username=username, email=email, password=password)
+                user.save()
+
+                user_model = User.objects.get(username=username)
+                new_profile = Profile.objects.create(user=user_model, id_user=user_model.id)
+                new_profile.save()
+                return redirect('register')
+        else:
+            messages.error(request, 'Password Not Matching')
+            return redirect('register')
+    else:
+        return render(request, 'signup.html')
+    
+def signin(request):
+
+    if request.method == "POST":
+        username = request.POST['username']
+        password = request.POST['password']
+
+        user = auth.authenticate(username=username, password=password)
+        if user is not None:
+            auth.login(request, user)
+            return redirect('/')
+        else:
+            messages.error(request, 'Credentials Invalid')
+            return redirect('signin')
+    else:
+        return render(request, 'signin.html')
+
+@login_required(login_url='signin')
+def logout(request):
+    auth.logout(request)
+    return redirect('signin')
