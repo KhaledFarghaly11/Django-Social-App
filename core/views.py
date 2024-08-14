@@ -81,8 +81,9 @@ def upload(request):
         image = request.FILES.get('image_upload')
         caption = request.POST['caption']
 
-        new_post = Post.objects.create(user=user, image=image, caption=caption)
-        new_post.save()
+        if image:
+            new_post = Post.objects.create(user=user, image=image, caption=caption)
+            new_post.save()
         return redirect('index')
     else:
         return redirect('index')
