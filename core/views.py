@@ -6,6 +6,14 @@ from .models import Profile, Post, LikePost, Followers
 from itertools import chain
 import random
 
+def anonymous_required(view_function): 
+    def wrapper_function(request, *args, **kwargs):
+        if request.user.is_authenticated:
+            return redirect('index')
+        else:
+            return view_function(request, *args, **kwargs)
+    return wrapper_function
+
 @login_required(login_url='signin')
 def index(request):
     user_obj = User.objects.get(username=request.user.username)
@@ -183,6 +191,7 @@ def settings(request):
         return redirect("settings")
     return render(request, 'setting.html', {'user_profile': user_profile})
 
+@anonymous_required
 def register(request):
 
     if request.method == "POST":
@@ -214,7 +223,8 @@ def register(request):
             return redirect('register')
     else:
         return render(request, 'signup.html')
-    
+
+@anonymous_required   
 def signin(request):
 
     if request.method == "POST":
